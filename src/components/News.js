@@ -1,95 +1,64 @@
-import React, { Component } from "react";
+import React, {useEffect, useState} from "react";
 import Newsitem from "./Newsitem";
 import Loading from "./Loading";
 import Proptypes from "prop-types";
 import InfiniteScroll from "react-infinite-scroll-component";
 
 
-export class News extends Component {
- capitlizeText = (string) => {
+const News = (props) => {
+  const [articles, setArticles] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [totalResults, setTotalResults] = useState(0)
+
+  // document.title = `${capitlizeText(props.category)}-Gedu Gazette`
+
+  const capitlizeText = (string) => {
     return string.charAt(0).toUpperCase() + string.slice(1);
-}
-  static defaultProps = {
-    country: "us",
-    pageSize: 4,
-    category: "bussiness",
-  };
-
-  static propTypes = {
-    country: Proptypes.string,
-    pageSize: Proptypes.number,
-    category: Proptypes.string,
-  };
-
-  constructor(props) {
-    super(props);
-    this.state = {
-      articles: [],
-      loading: false,
-      page: 1,
-      totalResults: 0
-    };
-    document.title = `${this.capitlizeText(this.props.category)}-Gedu Gazette`
   }
 
-  async updateNews() {
-    this.props.setProgress(0);
-    const url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=0039e8deca85486cbeb269c54f932924&page=${this.state.page}&pageSize=${this.props.pageSize}`;
-    this.setState({ loading: true });
+  const updateNews = async () => {
+    props.setProgress(0);
+    const url = `https://newsapi.org/v2/top-headlines?country=${props.country}&category=${props.category}&apiKey=${props.apiKey}&page=${page}&pageSize=${props.pageSize}`;
+    setLoading(true)
     let data = await fetch(url);
     let parsedData = await data.json();
     console.log(parsedData);
-    this.setState({
-      articles: parsedData.articles,
-      totalResults: parsedData.totalResults,
-      loading: false,
-    });
-    this.props.setProgress(100);
+    setArticles(parsedData.articles)
+    setTotalResults(parsedData.totalResults)
+    setLoading(false)
+    props.setProgress(100);
   }
 
-  async componentDidMount() {
-    this.updateNews();
-  }
+  useEffect(() => {
+    updateNews();
+  });
 
-  // handlePrevClick = async () => {
-  //   this.setState({
-  //     page: this.state.page - 1,
-  //   });
-  //   this.updateNews();
-  // };
+  const fetchMoreData = async () => {
+    const url = `https://newsapi.org/v2/top-headlines?country=${props.country}&category=${props.category}&apiKey=${props.apiKey}&page=${page}&pageSize=${props.pageSize}`;
+    let data = await fetch(url);
+    let parsedData = await data.json();
+    console.log(parsedData);
+    setArticles(articles.concat(parsedData.articles))
+    setTotalResults(parsedData.totalResults)
+    setPage(page+1)
+};
 
-  // handleNextClick = async () => {
-  //   this.setState({
-  //     page: this.state.page + 1,
-  //   });
-  //   this.updateNews();
-  // };
 
-  fetchMoreData = async () => {
-      const url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=0039e8deca85486cbeb269c54f932924&page=${this.state.page}&pageSize=${this.props.pageSize}`;
-      let data = await fetch(url);
-      let parsedData = await data.json();
-      console.log(parsedData);
-      this.setState({
-        articles: this.state.articles.concat(parsedData.articles),
-        totalResults: parsedData.totalResults,
-        page: this.state.page + 1
-      });
-  };
-  render() {
+
     return (
       <div className="container my-3  ">
-        <h2>Top Headlines From {this.capitlizeText(this.props.category)}</h2>
-        {this.state.loading && <Loading />}
+        <h2>Top Headlines From {capitlizeText(props.category)}</h2>
+        {loading && <Loading />}
         <InfiniteScroll
-          dataLength={this.state.articles.length}
-          next={this.fetchMoreData}
-          hasMore={this.state.articles.length !== this.state.totalResults}
+          dataLength={articles.length}
+          next={fetchMoreData}
+          hasMore={articles.length !== totalResults}
           loader={<Loading/>}
         >
         <div className="container">
         <div className="row">
-          {this.state.articles.map((element) => {
+          {articles.map((element) => {
               return (
                 <div className="col-md-3" key={element.url}>
                   <Newsitem
@@ -109,7 +78,85 @@ export class News extends Component {
         </InfiniteScroll>
       </div>
     );
-  }
+  
 }
 
+
+
+News.defaultProps = {
+  country: "us",
+  pageSize: 4,
+  category: "bussiness",
+};
+
+News.propTypes = {
+  country: Proptypes.string,
+  pageSize: Proptypes.number,
+  category: Proptypes.string,
+};
+
 export default News;
+
+
+
+
+
+
+// THE CLASS BASE FEATURES
+
+// capitlizeText = (string) => {
+//   return string.charAt(0).toUpperCase() + string.slice(1);
+// }
+// static defaultProps = {
+//   country: "us",
+//   pageSize: 4,
+//   category: "bussiness",
+// };
+
+// static propTypes = {
+//   country: Proptypes.string,
+//   pageSize: Proptypes.number,
+//   category: Proptypes.string,
+// };
+
+// constructor(props) {
+//   super(props);
+//   this.state = {
+//     articles: [],
+//     loading: false,
+//     page: 1,
+//     totalResults: 0
+//   };
+//   document.title = `${this.capitlizeText(props.category)}-Gedu Gazette`
+// }
+
+// async updateNews() {
+//   props.setProgress(0);
+//   const url = `https://newsapi.org/v2/top-headlines?country=${props.country}&category=${props.category}&apiKey=${props.apiKey}&page=${this.state.page}&pageSize=${props.pageSize}`;
+//   this.setState({ loading: true });
+//   let data = await fetch(url);
+//   let parsedData = await data.json();
+//   console.log(parsedData);
+//   this.setState({
+//     articles: parsedData.articles,
+//     totalResults: parsedData.totalResults,
+//     loading: false,
+//   });
+//   props.setProgress(100);
+// }
+
+// async componentDidMount() {
+//   this.updateNews();
+// }
+
+// fetchMoreData = async () => {
+//     const url = `https://newsapi.org/v2/top-headlines?country=${props.country}&category=${props.category}&apiKey=${props.apiKey}&page=${this.state.page}&pageSize=${props.pageSize}`;
+//     let data = await fetch(url);
+//     let parsedData = await data.json();
+//     console.log(parsedData);
+//     this.setState({
+//       articles: this.state.articles.concat(parsedData.articles),
+//       totalResults: parsedData.totalResults,
+//       page: this.state.page + 1
+//     });
+// };
